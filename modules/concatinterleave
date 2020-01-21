@@ -11,7 +11,7 @@ rule concatfastas:
         fastq2 = os.path.join(FASTQDUMP, "{accession}_1.fastq"),
         fastq3 = os.path.join(FASTQDUMP, "{accession}_2.fastq")
     output:
-        os.path.join(FASTQFILES, "{accession}.fastq")
+        os.path.join(FASTQFILES, "{accession}_prepped.fastq")
     shell:
         """
         cat {input.fastq2} {input.fastq3} > {output}

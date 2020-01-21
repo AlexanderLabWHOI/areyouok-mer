@@ -9,11 +9,11 @@ import os
 
 # useless python 2.7 software: afterqc -1 {accession}.fasta -g TRIMMEDFASTQFILES -b BADDIR
 
-rule concatenate:
+rule trimup:
     input:
-        fastq = os.path.join(FASTQFILES, "{accession}.fastq")
+        fastq = os.path.join(FASTQFILES, "{accession}_prepped.fastq")
     output:
-        os.path.join(TRIMMEDFASTQFILES, "{accession}.fastq")
+        os.path.join(TRIMMEDFASTQFILES, "{accession}_trimmed.fastq")
     params:
         phred = 5 # phred score we wish to use
     shell:

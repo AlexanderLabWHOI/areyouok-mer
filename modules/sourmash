@@ -5,28 +5,39 @@ TRIMMEDFASTQFILES = config["trimmedfastqdir"]
 OUTPUTDIR = config["outputsourmash"]
 COMPAREDIR = config["outputcomparison"]
 
+fastqfiles = os.listdir(FASTQDUMP)
+uniqueaccessions = set([(curr.split("_")[0]).split(".fastq")[0] for curr in fastqfiles])
+availablesigs = [ os.path.join(OUTPUTDIR, x + '.fastq.sig') for x in uniqueaccessions ]
+
 import os
 
 rule sourmashcompute:
     input:
-        fastafile = os.path.join(TRIMMEDFASTQFILES, "{sample}.fastq")
+        fastafile = os.path.join(TRIMMEDFASTQFILES, "{sample}_trimmed.fastq")
     output:
-        os.path.join("{sample}.fastq.sig")
+        os.path.join(OUTPUTDIR, "{sample}.fastq.sig")
     params:
-        kmerval = "21,31,51"
+        kmerval = "21,31,51",
+        outdir = OUTPUTDIR
     shell:
         """
+        echo "sample here!"
         sourmash compute -k {params.kmerval} --track-abundance {input}
-        mv {input}.sig OUTPUTDIR
+        mv {input}.sig {params.outdir}
         """
         
 rule sourmashcompare:
-    output:
-        os.path.join(COMPAREDIR, "thaps_k{kmer}.cmp.csv")
+    input:
+        availablesigs
     params:
         signame = os.path.join(OUTPUTDIR, "*.sig")
+    output:
+        out21 = os.path.join(COMPAREDIR, "thaps_k21.cmp.csv"),
+        out31 = os.path.join(COMPAREDIR, "thaps_k31.cmp.csv"),
+        out51 = os.path.join(COMPAREDIR, "thaps_k51.cmp.csv")
     shell:
         """
-        sourmash compare -k {kmer} {params.signame} --csv {output}
+        sourmash compare -k 21 {params.signame} --csv {output.out21}
+        sourmash compare -k 31 {params.signame} --csv {output.out31}
+        sourmash compare -k 51 {params.signame} --csv {output.out51}
         """
-        
