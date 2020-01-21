@@ -1,0 +1,32 @@
+configfile: "config.yaml"
+
+FASTQFILES = config["fastqdir"]
+TRIMMEDFASTQFILES = config["trimmedfastqdir"]
+OUTPUTDIR = config["outputsourmash"]
+COMPAREDIR = config["outputcomparison"]
+
+import os
+
+rule sourmashcompute:
+    input:
+        fastafile = os.path.join(TRIMMEDFASTQFILES, "{sample}.fastq")
+    output:
+        os.path.join("{sample}.fastq.sig")
+    params:
+        kmerval = "21,31,51"
+    shell:
+        """
+        sourmash compute -k {params.kmerval} --track-abundance {input}
+        mv {input}.sig OUTPUTDIR
+        """
+        
+rule sourmashcompare:
+    output:
+        os.path.join(COMPAREDIR, "thaps_k{kmer}.cmp.csv")
+    params:
+        signame = os.path.join(OUTPUTDIR, "*.sig")
+    shell:
+        """
+        sourmash compare -k {kmer} {params.signame} --csv {output}
+        """
+        

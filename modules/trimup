@@ -1,0 +1,23 @@
+configfile: "config.yaml"
+
+FASTQDUMP = config["fastqdumpdir"]
+FASTQFILES = config["fastqdir"]
+TRIMMEDFASTQFILES = config["trimmedfastqdir"]
+BADDIR = config["baddir"]
+
+import os
+
+# useless python 2.7 software: afterqc -1 {accession}.fasta -g TRIMMEDFASTQFILES -b BADDIR
+
+rule concatenate:
+    input:
+        fastq = os.path.join(FASTQFILES, "{accession}.fastq")
+    output:
+        os.path.join(TRIMMEDFASTQFILES, "{accession}.fastq")
+    params:
+        phred = 5 # phred score we wish to use
+    shell:
+        """
+        seqtk trimfq -q {params.phred} {input.fastq} > {output}
+        echo "That worked"
+        """

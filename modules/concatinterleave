@@ -1,0 +1,18 @@
+configfile: "config.yaml"
+
+FASTQDUMP = config["fastqdumpdir"]
+FASTQFILES = config["fastqdir"]
+
+import os
+
+rule concatfastas:
+    input:
+        #fastq1 = os.path.join(FASTQDUMP, "{accession}.fastq"),
+        fastq2 = os.path.join(FASTQDUMP, "{accession}_1.fastq"),
+        fastq3 = os.path.join(FASTQDUMP, "{accession}_2.fastq")
+    output:
+        os.path.join(FASTQFILES, "{accession}.fastq")
+    shell:
+        """
+        cat {input.fastq2} {input.fastq3} > {output}
+        """
