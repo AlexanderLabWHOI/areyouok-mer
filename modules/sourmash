@@ -13,17 +13,18 @@ import os
 
 rule sourmashcompute:
     input:
-        fastafile = os.path.join(TRIMMEDFASTQFILES, "{sample}_trimmed.fastq")
+        fastafile = os.path.join(TRIMMEDFASTQFILES, "{sample}.fastq")
     output:
         os.path.join(OUTPUTDIR, "{sample}.fastq.sig")
     params:
         kmerval = "21,31,51",
-        outdir = OUTPUTDIR
+        outdir = OUTPUTDIR,
+        inputname = "{sample}"
     shell:
         """
         echo "sample here!"
         sourmash compute -k {params.kmerval} --track-abundance {input}
-        mv {input}.sig {params.outdir}
+        mv {params.inputname}.sig {params.outdir}
         """
         
 rule sourmashcompare:

@@ -11,6 +11,7 @@ from snakemake.exceptions import print_exception, WorkflowError
 FASTQDUMP = config["fastqdumpdir"]
 FASTQFILES = config["fastqdir"]
 TRIMMEDFASTQFILES = config["trimmedfastqdir"]
+TRIMMEDINTERMED = config["trimmedfastqdirintermed"]
 OUTPUTDIR = config["outputsourmash"]
 COMPAREDIR = config["outputcomparison"]
 
@@ -24,13 +25,16 @@ kmers = [21,31,51]
 
 include: "modules/concatinterleave"
 include: "modules/trimup"
+include: "modules/cutlowabundance"
 include: "modules/sourmash"
 
 rule all:
     input:
         # interleave the output files from the NCBI fasterqdump
         fastqs_interleaved = expand(os.path.join(FASTQFILES, "{accession}.fastq"), accession = uniqueaccessions),
-        # next, we need to do error trimming. for this, we use AfterQC
+        # next, we need to do error trimming. we use seqtk
+        trimmed_intermed = expand(os.path.join(TRIMMEDINTERMED, "{accession}.fastq"), accession = uniqueaccessions),
+        # next, cut low abundance kmers. we use khmer
         trimmed_fastqs = expand(os.path.join(TRIMMEDFASTQFILES, "{accession}.fastq"), accession = uniqueaccessions),
         # the next step is computing the sourmash signatures 
         signatures = expand(os.path.join(OUTPUTDIR, "{accession}.fastq.sig"), accession = uniqueaccessions),

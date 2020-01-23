@@ -1,6 +1,7 @@
 fastqdumpdir: data/ncbi_thaps_fastqs
 fastqdir: data/interleaved_ncbi
 trimmedfastqdir: data/trimmed_output
+trimmedfastqdirintermed: data/trimmed_output_intermed
 baddir: data/bad_from_afterqc
 outputsourmash: data/sourmash_sigs
 outputcomparison: data/cmp_sourmash

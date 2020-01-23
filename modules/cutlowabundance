@@ -10,15 +10,12 @@ import os
 
 # useless python 2.7 software: afterqc -1 {accession}.fasta -g TRIMMEDFASTQFILES -b BADDIR
 
-rule trimup:
+rule cutlow:
     input:
-        fastq = os.path.join(FASTQFILES, "{accession}.fastq")
+        fastq = os.path.join(TRIMMEDINTERMED, "{accession}.fastq")
     output:
-        os.path.join(TRIMMEDINTERMED, "{accession}.fastq")
-    params:
-        phred = 5 # phred score we wish to use
+        os.path.join(TRIMMEDFASTQFILES, "{accession}.fastq")
+    conda:
+        "../trimenv.yaml"
     shell:
-        """
-        seqtk trimfq -q {params.phred} {input.fastq} > {output}
-        echo "That worked"
-        """
+        " (trim-low-abund.py {input} -V -Z 10 -C 3 --gzip -M 3e9 -o {output}) "
