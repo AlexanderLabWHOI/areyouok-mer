@@ -18,4 +18,4 @@ rule cutlow:
     conda:
         "../trimenv.yaml"
     shell:
-        " (trim-low-abund.py {input} -V -Z 10 -C 3 --gzip -M 3e9 -o {output}) "
+        " (trim-low-abund.py {input} -k 21 -V -Z 10 -C 3 --gzip -M 3e9 -o {output}) "

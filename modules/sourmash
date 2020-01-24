@@ -24,7 +24,7 @@ rule sourmashcompute:
         """
         echo "sample here!"
         sourmash compute -k {params.kmerval} --track-abundance {input}
-        mv {params.inputname}.sig {params.outdir}
+        mv {params.inputname}.fastq.sig {params.outdir}
         """
         
 rule sourmashcompare:
