@@ -1,0 +1,50 @@
+configfile: "config.yaml"
+
+RAWFASTQFILES = config["fastqdumpdir"]
+FASTQFILES = config["fastqdir"]
+TRIMMEDFASTQFILES = config["trimmedfastqdir"]
+TRIMMEDINTERMED = config["trimmedfastqdirintermed"]
+OUTPUTDIR = config["outputsourmash"]
+COMPAREDIR = config["outputcomparison"]
+TRINITYFASTADIR = config["trinityfastadir"]
+TRINITYOUTDIR = config["trinityoutputdir"]
+TRANSDECODERDIR = config["transdecoder"]
+
+fastqfiles = os.listdir(FASTQDUMP)
+uniqueaccessions = set([(curr.split("_")[0]).split(".fastq")[0] for curr in fastqfiles])
+availablesigs = [ os.path.join(OUTPUTDIR, x + '.fastq.sig') for x in uniqueaccessions ]
+
+#os.path.join(TRINITYOUTDIR, "trinity_results_sample_{sample}, "Trinity.fasta")
+#seqret -sequence {params.fasta} -outseq {input.fastafile}
+# cat {input.fastafile} | awk '{if(NR%4==1) {printf(">%s\n",substr($0,2));} else if(NR%4==2) print;}' > {params.fasta}
+# -m 50 to try to force this to work 
+# sed -n '1~4s/^@/>/p;2~4p' {input.fastafile} > {params.fasta}
+
+rule transdecoder:
+    input:
+        fastafile = os.path.join(TRINITYFASTADIR, "{sample}.fasta")
+    output:
+        pep = os.path.join(TRANSDECODERDIR, "{sample}.fasta.transdecoder.pep"),
+        gff = os.path.join(TRANSDECODERDIR, "{sample}.fasta.transdecoder.gff3")
+    log:
+        "logs/trinity/outputlog_{sample}_transdecoder.log"
+    params:
+        inputname = "{sample}",
+        outputdir = os.path.join(TRANSDECODERDIR, "{sample}.pep"),
+        fasta = os.path.join(TRIMMEDFASTQFILES, "{sample}.fasta"),
+        cds = os.path.join(TRANSDECODERDIR, "{sample}.fasta.transdecoder.cds"),
+        gff3 = os.path.join(TRANSDECODERDIR, "{sample}.fasta.transdecoder.gff3"),
+        bed = os.path.join(TRANSDECODERDIR, "{sample}.fasta.transdecoder.bed"),
+        trinresult = os.path.join(TRINITYOUTDIR, "trinity_results_sample_{sample}", "Trinity.fasta"),
+        trinresultdir = os.path.join(TRINITYOUTDIR, "trinity_results_sample_{sample}")
+    threads: 4
+    shell:
+        """
+        TransDecoder.LongOrfs -t {input.fastafile}
+        TransDecoder.Predict -t {input.fastafile}
+        echo "hello!"
+        mv {params.inputname}.fasta.transdecoder.pep {output.pep}
+        mv {params.inputname}.fasta.transdecoder.cds {params.cds}
+        mv {params.inputname}.fasta.transdecoder.gff3 {params.gff3}
+        mv {params.inputname}.fasta.transdecoder.bed {params.bed}
+        """

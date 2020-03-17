@@ -13,3 +13,5 @@ dependencies:
         - afterqc
         - seqtk
         - khmer
+        - transdecoder
+        - emboss

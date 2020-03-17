@@ -1,0 +1,38 @@
+configfile: "config.yaml"
+
+RAWFASTQFILES = config["fastqdumpdir"]
+FASTQFILES = config["fastqdir"]
+TRIMMEDFASTQFILES = config["trimmedfastqdir"]
+OUTPUTDIR = config["outputsourmash"]
+COMPAREDIR = config["outputcomparison"]
+TRINITYFASTADIR = config["trinityfastadir"]
+TRINITYOUTDIR = config["trinityoutputdir"]
+TRANSDECODERDIR = config["transdecoder"]
+BACKTRANSLATEDDIR = config["backtrans"]
+
+fastqfiles = os.listdir(FASTQDUMP)
+uniqueaccessions = set([(curr.split("_")[0]).split(".fastq")[0] for curr in fastqfiles])
+availablesigs = [ os.path.join(OUTPUTDIR, x + '.fastq.sig') for x in uniqueaccessions ]
+
+#os.path.join(TRINITYOUTDIR, "trinity_results_sample_{sample}, "Trinity.fasta")
+
+rule backtransseq:
+    input:
+        pepfile = os.path.join(TRANSDECODERDIR, "{sample}.fasta.transdecoder.pep")
+    output:
+        os.path.join(BACKTRANSLATEDDIR, "{sample}.fasta")
+    log:
+        "logs/trinity/outputlog_{sample}_transdecoder.log"
+    params:
+        inputname = "{sample}",
+        outputdir = os.path.join(TRANSDECODERDIR, "{sample}.pep"),
+        cds = os.path.join(TRANSDECODERDIR, "{sample}.fasta.transdecoder.cds"),
+        gff3 = os.path.join(TRANSDECODERDIR, "{sample}.fasta.transdecoder.gff3"),
+        bed = os.path.join(TRANSDECODERDIR, "{sample}.fasta.transdecoder.bed"),
+        trinresult = os.path.join(TRINITYOUTDIR, "trinity_results_sample_{sample}", "Trinity.fasta"),
+        trinresultdir = os.path.join(TRINITYOUTDIR, "trinity_results_sample_{sample}")
+    threads: 4
+    shell:
+        """
+        backtranseq -sequence {input.pepfile} -outfile {output}
+        """

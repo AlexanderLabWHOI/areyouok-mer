@@ -4,4 +4,9 @@ trimmedfastqdir: data/trimmed_output
 trimmedfastqdirintermed: data/trimmed_output_intermed
 baddir: data/bad_from_afterqc
 outputsourmash: data/sourmash_sigs
+trinityoutputdir: data/trinity_output
+trinityfastadir: data/trinity_output/trinityfiles
 outputcomparison: data/cmp_sourmash
+transdecoder: data/transdecoder
+backtrans: data/backtransseq
+backtranssig: data/backtranssig

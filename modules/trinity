@@ -1,0 +1,36 @@
+configfile: "config.yaml"
+
+RAWFASTQFILES = config["fastqdumpdir"]
+FASTQFILES = config["fastqdir"]
+TRIMMEDFASTQFILES = config["trimmedfastqdir"]
+OUTPUTDIR = config["outputsourmash"]
+COMPAREDIR = config["outputcomparison"]
+TRINITYFASTADIR = config["trinityfastadir"]
+TRINITYOUTDIR = config["trinityoutputdir"]
+
+fastqfiles = os.listdir(FASTQDUMP)
+uniqueaccessions = set([(curr.split("_")[0]).split(".fastq")[0] for curr in fastqfiles])
+availablesigs = [ os.path.join(OUTPUTDIR, x + '.fastq.sig') for x in uniqueaccessions ]
+
+#os.path.join(TRINITYOUTDIR, "trinity_results_sample_{sample}, "Trinity.fasta")
+
+rule trinity:
+    input:
+        sideone = os.path.join(RAWFASTQFILES, "{sample}_3.fastq"),
+        sidetwo = os.path.join(RAWFASTQFILES, "{sample}_4.fastq")
+    output:
+        os.path.join(TRINITYFASTADIR, "{sample}.fasta")
+    log:
+        "logs/trinity/outputlog_{sample}_trinity.log"
+    params:
+        inputname = "{sample}",
+        outputdir = os.path.join(TRINITYFASTADIR, "{sample}.fasta"),
+        trinresult = os.path.join(TRINITYOUTDIR, "trinity_results_sample_{sample}", "Trinity.fasta"),
+        trinresultdir = os.path.join(TRINITYOUTDIR, "trinity_results_sample_{sample}")
+    threads: 4
+    shell:
+        """
+        echo "in Trinity!"
+        Trinity --seqType fq --left {input.sideone} --right {input.sidetwo} --output {params.trinresultdir} --max_memory 150G --trimmomatic
+        cp {params.trinresult} {params.outputdir}
+        """
