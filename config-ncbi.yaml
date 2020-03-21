@@ -5,14 +5,18 @@ trimmedfastqdirintermed: data/trimmed_output_intermed
 baddir: data/bad_from_afterqc
 outputsourmash: data/sourmash_sigs
 trinityoutputdir: data/trinity_output
-trinityfastadir: data/mmetsp_ehux # to ensure transdecoder still does what we want
-mmetspdir: data/mmetsp_ehux
-startingdir: data/mmetsp_ehux
-startingextension: .fasta
+trinityfastadir: data/trinity_output/trinityfiles
+startingdir: data/ncbi_thaps_fastqs
+startingextension: .fastq
 outputcomparison: data/cmp_sourmash
 transdecoder: data/transdecoder
 backtrans: data/backtransseq
 backtranssig: data/backtranssig
 referencenames: 
-    - ehuxreference
-outputname: ehux-mmetsp
+    - thapsreference
+    - thapsreferencecoding
+    - pseudreference
+    - pseudreferencecoding
+    - fragreference
+    - fragreferencecoding
+outputname: TP_PN_FG_exp

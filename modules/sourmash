@@ -9,16 +9,19 @@ TRINITYFASTADIR = config["trinityfastadir"]
 TRANSDECODERDIR = config["transdecoder"]
 BACKTRANSLATEDDIR = config["backtrans"]
 BACKTRANSLATEDSIG = config["backtranssig"]
+MMETSPDIR = config["mmetspdir"]
+OUTPUTNAME = config["outputname"]
 
 fastqfiles = os.listdir(FASTQFILES) #FASTQDUMP)
 uniqueaccessions = set([(curr.split("_")[0]).split(".fastq")[0] for curr in fastqfiles if len((curr.split("_")[0]).split(".fastq")) > 1 ])
 availablesigs = [ os.path.join(OUTPUTDIR, x + '.fastq.sig') for x in uniqueaccessions ]
 
 trinityfastqfiles = os.listdir(TRINITYFASTADIR)
-uniqueaccessions = set([curr.split(".fasta")[0] for curr in trinityfastqfiles])
+uniqueaccessions = set([curr.split(".fasta")[0] for curr in trinityfastqfiles if ".fasta" in curr])
 #availablesigs.extend([ os.path.join(TRINITYFASTASIGS, x + '.fasta.sig') for x in uniqueaccessions ])
 availablesigs.extend([ os.path.join(OUTPUTDIR, x + '.fasta.sig') for x in uniqueaccessions ])
 availablesigs.extend([ os.path.join(BACKTRANSLATEDSIG, x + '.fasta.sig') for x in uniqueaccessions ])
+availablesigsprot = [ os.path.join(TRANSDECODERDIR, x + '.fasta.transdecoder.pep.sig') for x in uniqueaccessions ]
 print(availablesigs)
 print("available sigs above")
 
@@ -30,7 +33,7 @@ rule sourmashcompute:
     output:
         os.path.join(OUTPUTDIR, "{sample}.fastq.sig")
     params:
-        kmerval = "21,31,51",
+        kmerval = "21,31,33,51",
         outdir = OUTPUTDIR,
         inputname = "{sample}"
     shell:
@@ -46,8 +49,24 @@ rule sourmashcomputetrinity:
     output:
         os.path.join(OUTPUTDIR, "{sample}.fasta.sig")
     params:
-        kmerval = "21,31,51",
+        kmerval = "21,31,33,51",
         outdir = OUTPUTDIR,
+        inputname = "{sample}"
+    shell:
+        """
+        echo "sample here!"
+        sourmash compute -k {params.kmerval} --track-abundance {input}
+        mv {params.inputname}.fasta.sig {params.outdir}
+        """
+        
+rule sourmashcomputemmetsp:
+    input:
+        fastafile = os.path.join(MMETSPDIR, "{sample}.fasta")
+    output:
+        os.path.join(MMETSPDIR, "{sample}.fasta.sig")
+    params:
+        kmerval = "21,31,33,51",
+        outdir = MMETSPDIR,
         inputname = "{sample}"
     shell:
         """
@@ -62,7 +81,7 @@ rule sourmashcomputetransseq:
     output:
         os.path.join(BACKTRANSLATEDSIG, "{sample}.fasta.sig")
     params:
-        kmerval = "21,31,51",
+        kmerval = "21,33,51",
         outdir = BACKTRANSLATEDSIG,
         inputname = "{sample}"
     shell:
@@ -78,13 +97,13 @@ rule sourmashcomputeprotein:
     output:
         os.path.join(TRANSDECODERDIR, "{sample}.fasta.transdecoder.pep.sig")
     params:
-        kmerval = "21,33,51",
+        kmerval = "12,15,18,21,33,51",
         outdir = TRANSDECODERDIR,
         inputname = "{sample}"
     shell:
         """
         echo "sample here!"
-        sourmash compute -k {params.kmerval} --track-abundance {input} --protein
+        sourmash compute -k {params.kmerval} --track-abundance {input} --protein 
         mv {params.inputname}.fasta.transdecoder.pep.sig {params.outdir}
         """
         
@@ -94,12 +113,35 @@ rule sourmashcompare:
     params:
         signame = availablesigs #" ".join([os.path.join(OUTPUTDIR, signame + ".sig") for signame in availablesigs]) #os.path.join(OUTPUTDIR, "*.sig")
     output:
-        out21 = os.path.join(COMPAREDIR, "thaps_k21.cmp.csv"),
-        out31 = os.path.join(COMPAREDIR, "thaps_k31.cmp.csv"),
-        out51 = os.path.join(COMPAREDIR, "thaps_k51.cmp.csv")
+        out21 = os.path.join(COMPAREDIR, OUTPUTNAME + "_k21.cmp.csv"),
+        out33 = os.path.join(COMPAREDIR, OUTPUTNAME + "_k33.cmp.csv"),
+        out51 = os.path.join(COMPAREDIR, OUTPUTNAME + "_k51.cmp.csv")
     shell:
         """
         sourmash compare -k 21 {params.signame} --csv {output.out21}
-        sourmash compare -k 31 {params.signame} --csv {output.out31}
+        sourmash compare -k 33 {params.signame} --csv {output.out33}
         sourmash compare -k 51 {params.signame} --csv {output.out51}
+        """
+        
+
+rule sourmashcompareprotein:
+    input:
+        availablesigs
+    params:
+        signame = availablesigsprot #" ".join([os.path.join(OUTPUTDIR, signame + ".sig") for signame in availablesigs]) #os.path.join(OUTPUTDIR, "*.sig")
+    output:
+        out12 = os.path.join(COMPAREDIR, OUTPUTNAME + "_k12_protein.cmp.csv"),
+        out15 = os.path.join(COMPAREDIR, OUTPUTNAME + "_k15_protein.cmp.csv"),
+        out18 = os.path.join(COMPAREDIR, OUTPUTNAME + "_k18_protein.cmp.csv"),
+        out21 = os.path.join(COMPAREDIR, OUTPUTNAME + "_k21_protein.cmp.csv"),
+        out33 = os.path.join(COMPAREDIR, OUTPUTNAME + "_k33_protein.cmp.csv"),
+        out51 = os.path.join(COMPAREDIR, OUTPUTNAME + "_k51_protein.cmp.csv")
+    shell:
+        """
+        sourmash compare -k 12 {params.signame} --csv {output.out12} --protein
+        sourmash compare -k 15 {params.signame} --csv {output.out15} --protein
+        sourmash compare -k 18 {params.signame} --csv {output.out18} --protein
+        sourmash compare -k 21 {params.signame} --csv {output.out21} --protein
+        sourmash compare -k 33 {params.signame} --csv {output.out33} --protein
+        sourmash compare -k 51 {params.signame} --csv {output.out51} --protein
         """

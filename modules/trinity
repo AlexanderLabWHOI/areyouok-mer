@@ -8,16 +8,17 @@ COMPAREDIR = config["outputcomparison"]
 TRINITYFASTADIR = config["trinityfastadir"]
 TRINITYOUTDIR = config["trinityoutputdir"]
 
+STARTDIR = config["startingdir"] # do we start with assemblies or with something else? 
+STARTEXTENSION = config["startingextension"] # extension for our starting point files
+
 fastqfiles = os.listdir(FASTQDUMP)
 uniqueaccessions = set([(curr.split("_")[0]).split(".fastq")[0] for curr in fastqfiles])
 availablesigs = [ os.path.join(OUTPUTDIR, x + '.fastq.sig') for x in uniqueaccessions ]
 
-#os.path.join(TRINITYOUTDIR, "trinity_results_sample_{sample}, "Trinity.fasta")
-
 rule trinity:
     input:
-        sideone = os.path.join(RAWFASTQFILES, "{sample}_3.fastq"),
-        sidetwo = os.path.join(RAWFASTQFILES, "{sample}_4.fastq")
+        sideone = os.path.join(STARTDIR, "{sample}_3.fastq"),
+        sidetwo = os.path.join(STARTDIR, "{sample}_4.fastq")
     output:
         os.path.join(TRINITYFASTADIR, "{sample}.fasta")
     log:
