@@ -1,0 +1,27 @@
+configfile: "config.yaml"
+
+RAWFASTQFILES = config["fastqdumpdir"]
+TRINITYFASTADIR = config["trinityfastadir"]
+BLASTOUTDIR = config["blastoutdir"]
+
+rule blast:
+    input:
+        raw = os.path.join(RAWFASTQFILES, "{sample}_{suffix}.fastq"),
+        trinity = os.path.join(TRINITYFASTADIR, "{sample}.fasta")
+    output:
+        os.path.join(BLASTOUTDIR, "{sample}_{suffix}.txt")
+    log:
+        "logs/trinity/outputlog_{sample}_{suffix}_blast.log"
+    params:
+        inputname = "{sample}",
+        outputdir = os.path.join(BLASTOUTDIR, "{sample}_{suffix}.txt"),
+        outputblast = os.path.join(BLASTOUTDIR, "{sample}_{suffix}.txt"),
+        blastdb = "{sample}_db"
+    threads: 4
+    shell:
+        """
+        #blastn -query {input.raw} -subject {input.trinity} -outfmt 6 -out {params.outputdir}
+        makeblastdb -in {input.trinity} -dbtype nucl -parse_seqids -out {params.blastdb} -title {params.inputname}
+        magicblast -query {input.raw} -db {params.blastdb} -out {params.outputblast} -infmt fastq -outfmt tabular
+        rm {params.inputname}_db.*
+        """

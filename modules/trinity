@@ -2,6 +2,7 @@ configfile: "config.yaml"
 
 RAWFASTQFILES = config["fastqdumpdir"]
 FASTQFILES = config["fastqdir"]
+TRIMMEDINTERMED = config["trimmedfastqdirintermed"]
 TRIMMEDFASTQFILES = config["trimmedfastqdir"]
 OUTPUTDIR = config["outputsourmash"]
 COMPAREDIR = config["outputcomparison"]
@@ -16,6 +17,47 @@ uniqueaccessions = set([(curr.split("_")[0]).split(".fastq")[0] for curr in fast
 availablesigs = [ os.path.join(OUTPUTDIR, x + '.fastq.sig') for x in uniqueaccessions ]
 
 rule trinity:
+    input:
+        sideone = os.path.join(STARTDIR, "{sample}_3.fastq"),
+        sidetwo = os.path.join(STARTDIR, "{sample}_4.fastq")
+    output:
+        os.path.join(TRINITYFASTADIR, "{sample}_twoside.fasta")
+    log:
+        "logs/trinity/outputlog_{sample}_trinity.log"
+    params:
+        inputname = "{sample}",
+        outputdir = os.path.join(TRINITYFASTADIR, "{sample}.fasta"),
+        trinresult = os.path.join(TRINITYOUTDIR, "trinity_results_sample_{sample}", "Trinity.fasta"),
+        trinresultdir = os.path.join(TRINITYOUTDIR, "trinity_results_sample_{sample}")
+    threads: 4
+    shell:
+        """
+        echo "in Trinity!"
+        Trinity --seqType fq --left {input.sideone} --right {input.sidetwo} --output {params.trinresultdir} --max_memory 150G --trimmomatic
+        cp {params.trinresult} {params.outputdir}
+        """
+        
+rule trinity_oneside:
+    input:
+        sideone = os.path.join(TRIMMEDINTERMED, "{sample}{ext}")
+    output:
+        os.path.join(TRINITYFASTADIR, "{sample}.fasta")
+    log:
+        "logs/trinity/outputlog_{sample}_trinity.log"
+    params:
+        inputname = "{sample}",
+        outputdir = os.path.join(TRINITYFASTADIR, "{sample}.fasta"),
+        trinresult = os.path.join(TRINITYOUTDIR, "trinity_results_sample_{sample}", "Trinity.fasta"),
+        trinresultdir = os.path.join(TRINITYOUTDIR, "trinity_results_sample_{sample}")
+    threads: 4
+    shell:
+        """
+        echo "in Trinity!"
+        Trinity --seqType fq --single {input.sideone} --output {params.trinresultdir} --max_memory 150G --trimmomatic
+        cp {params.trinresult} {params.outputdir}
+        """ 
+        
+rule trinity_twoside:
     input:
         sideone = os.path.join(STARTDIR, "{sample}_3.fastq"),
         sidetwo = os.path.join(STARTDIR, "{sample}_4.fastq")

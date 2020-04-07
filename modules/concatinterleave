@@ -5,14 +5,59 @@ FASTQFILES = config["fastqdir"]
 
 import os
 
-rule concatfastas:
-    input:
+#rule concatfastas:
+#    input:
         #fastq1 = os.path.join(FASTQDUMP, "{accession}.fastq"),
-        fastq2 = os.path.join(FASTQDUMP, "{accession}_1.fastq"),
-        fastq3 = os.path.join(FASTQDUMP, "{accession}_2.fastq")
+        #fastq2 = os.path.join(FASTQDUMP, "{accession}_1.fastq"),
+        #fastq3 = os.path.join(FASTQDUMP, "{accession}_2.fastq")
+#    output:
+#        os.path.join(FASTQFILES, "{accession}.fastq")
+#    shell:
+#        """
+#        cat {input.fastq2} {input.fastq3} > {output}
+#        """
+        
+#rule concatfastas:
+#    input:
+#        fastq1 = os.path.join(FASTQDUMP, "{accession}{ext}")
+#    output:
+#        os.path.join(FASTQFILES, "{accession}{ext}")
+#    params:
+#        fastq1 = os.path.join(FASTQDUMP, "{accession}{ext}"),
+#        fastq2 = os.path.join(FASTQDUMP, "{accession}_3{ext}"),
+#        fastq3 = os.path.join(FASTQDUMP, "{accession}_4{ext}"),
+#        simpleoutput = os.path.join(FASTQFILES, "{accession}{ext}")
+#    run:
+#        """
+#        if input.fastq2 in os.listdir(FASTQDUMP):
+#            os.system("cat " + str(params.fastq2) + str(params.fastq3) + " > " + str(output))
+#            os.system("cp " + str(output) + " " + str(params.simpleoutput))
+#        else:
+#            os.system("cat " + str(params.fastq1) + " > " + str(output))
+#        """
+        
+rule concatfastas_34:
+    input:
+        fastq2 = os.path.join(FASTQDUMP, "{accession}_3{ext}"),
+        fastq3 = os.path.join(FASTQDUMP, "{accession}_4{ext}"),
     output:
-        os.path.join(FASTQFILES, "{accession}.fastq")
+        os.path.join(FASTQFILES, "{accession}{ext}")
+    params:
+        simpleoutput = os.path.join(FASTQFILES, "{accession}{ext}")
     shell:
         """
         cat {input.fastq2} {input.fastq3} > {output}
+        """
+        
+        
+rule concatfastas_1:
+    input:
+        fastq1 = os.path.join(FASTQDUMP, "{accession}_3{ext}")
+    output:
+        os.path.join(FASTQFILES, "{accession}{ext}")
+    params:
+        simpleoutput = os.path.join(FASTQFILES, "{accession}{ext}")
+    shell:
+        """
+        cat {input.fastq1} > {output}
         """

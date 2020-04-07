@@ -41,10 +41,12 @@ rule transdecoder:
     shell:
         """
         TransDecoder.LongOrfs -t {input.fastafile}
-        TransDecoder.Predict -t {input.fastafile}
+        TransDecoder.Predict -t {input.fastafile} --no_refine_starts 
         echo "hello!"
         mv {params.inputname}.fasta.transdecoder.pep {output.pep}
         mv {params.inputname}.fasta.transdecoder.cds {params.cds}
         mv {params.inputname}.fasta.transdecoder.gff3 {params.gff3}
         mv {params.inputname}.fasta.transdecoder.bed {params.bed}
+        rm {params.inputname}.fasta.transdecoder_dir*
+        rm pipeliner.*.cmds
         """

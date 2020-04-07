@@ -1,5 +1,8 @@
 configfile: "config.yaml"
 
+import os
+import pandas as pd
+
 FASTQFILES = config["fastqdir"]
 TRIMMEDINTERMED = config["trimmedfastqdirintermed"]
 TRIMMEDFASTQFILES = config["trimmedfastqdir"]
@@ -11,27 +14,34 @@ BACKTRANSLATEDDIR = config["backtrans"]
 BACKTRANSLATEDSIG = config["backtranssig"]
 MMETSPDIR = config["mmetspdir"]
 OUTPUTNAME = config["outputname"]
+REFERENCEDIR = config["referencedir"]
 
-fastqfiles = os.listdir(FASTQFILES) #FASTQDUMP)
-uniqueaccessions = set([(curr.split("_")[0]).split(".fastq")[0] for curr in fastqfiles if len((curr.split("_")[0]).split(".fastq")) > 1 ])
-availablesigs = [ os.path.join(OUTPUTDIR, x + '.fastq.sig') for x in uniqueaccessions ]
+indexfile = pd.read_csv(config["indexfile"], sep = "\t", index_col = 2)
+referencefiles = list((indexfile.loc["refgen"])["FileName"])
+rawfiles = (indexfile.loc[["refgen","onesid"]])
+mmetspfiles = (indexfile.loc[["reftrans"]])
 
-trinityfastqfiles = os.listdir(TRINITYFASTADIR)
-uniqueaccessions = set([curr.split(".fasta")[0] for curr in trinityfastqfiles if ".fasta" in curr])
-#availablesigs.extend([ os.path.join(TRINITYFASTASIGS, x + '.fasta.sig') for x in uniqueaccessions ])
-availablesigs.extend([ os.path.join(OUTPUTDIR, x + '.fasta.sig') for x in uniqueaccessions ])
-availablesigs.extend([ os.path.join(BACKTRANSLATEDSIG, x + '.fasta.sig') for x in uniqueaccessions ])
-availablesigsprot = [ os.path.join(TRANSDECODERDIR, x + '.fasta.transdecoder.pep.sig') for x in uniqueaccessions ]
-print(availablesigs)
-print("available sigs above")
+availablesigs = []
+directorydict = dict({"refgen":REFERENCEDIR,\
+                      "reftrans":MMETSPDIR,\
+                      "onesid":TRIMMEDINTERMED,\
+                      "trinity":TRINITYFASTADIR})
+for r in range(0, len(rawfiles.index)):
+    currdata = rawfiles.iloc[r]
+    availablesigs.append(os.path.join(directorydir[currdata.index], str(currdata["FileName"]) + str(currdata["FileExtension"]) + ".sig"))
+    # also looking for a signature in the Trinity directory.
+    if str(directorydir[currdata.index]) in ["onesid", "twosid"]:
+        availablesigs.append(os.path.join(TRINITYFASTADIR, str(currdata["FileName"]) + str(currdata["FileExtension"]) + ".sig"))
+    
+
 
 import os
 
 rule sourmashcompute:
     input:
-        fastafile = os.path.join(TRIMMEDINTERMED, "{sample}.fastq")
+        fastafile = os.path.join(TRIMMEDINTERMED, "{sample}{ext}")
     output:
-        os.path.join(OUTPUTDIR, "{sample}.fastq.sig")
+        os.path.join(OUTPUTDIR, "{sample}{ext}.sig")
     params:
         kmerval = "21,31,33,51",
         outdir = OUTPUTDIR,
@@ -111,7 +121,7 @@ rule sourmashcompare:
     input:
         availablesigs
     params:
-        signame = availablesigs #" ".join([os.path.join(OUTPUTDIR, signame + ".sig") for signame in availablesigs]) #os.path.join(OUTPUTDIR, "*.sig")
+        signame = availablesigs 
     output:
         out21 = os.path.join(COMPAREDIR, OUTPUTNAME + "_k21.cmp.csv"),
         out33 = os.path.join(COMPAREDIR, OUTPUTNAME + "_k33.cmp.csv"),

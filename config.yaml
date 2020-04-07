@@ -3,16 +3,26 @@ fastqdir: data/interleaved_ncbi
 trimmedfastqdir: data/trimmed_output
 trimmedfastqdirintermed: data/trimmed_output_intermed
 baddir: data/bad_from_afterqc
+blastoutdir: data/blastoutdir
+mmetspdir: data/mmetsp_ehux # directory containing mmetsp files
+referencedir: data/interleaved_ncbi # directory containing reference files
+indexfile: data/6April2020.txt # index file created in `organize_commands.ipynb`
 outputsourmash: data/sourmash_sigs
 trinityoutputdir: data/trinity_output
-trinityfastadir: data/mmetsp_ehux # to ensure transdecoder still does what we want
-mmetspdir: data/mmetsp_ehux
-startingdir: data/mmetsp_ehux
-startingextension: .fasta
+trinityfastadir: data/trinity_output/trinityfiles
+startingdir: data/ncbi_thaps_fastqs
+startingextension: .fastq
 outputcomparison: data/cmp_sourmash
 transdecoder: data/transdecoder
 backtrans: data/backtransseq
 backtranssig: data/backtranssig
 referencenames: 
+    - thapsreference
+    - thapsreferencecoding
+    - pseudreference
+    - pseudreferencecoding
+    - fragreference
+    - fragreferencecoding
     - ehuxreference
-outputname: ehux-mmetsp
+    - ehuxreferencecoding
+outputname: ehux_exp
