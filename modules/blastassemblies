@@ -1,21 +1,22 @@
 configfile: "config.yaml"
 
 RAWFASTQFILES = config["fastqdumpdir"]
+FASTQFILES = config["fastqdir"]
 TRINITYFASTADIR = config["trinityfastadir"]
 BLASTOUTDIR = config["blastoutdir"]
 
 rule blast:
     input:
-        raw = os.path.join(RAWFASTQFILES, "{sample}_{suffix}.fastq"),
+        raw = os.path.join(FASTQFILES, "{sample}.{ext}"),
         trinity = os.path.join(TRINITYFASTADIR, "{sample}.fasta")
     output:
-        os.path.join(BLASTOUTDIR, "{sample}_{suffix}.txt")
+        os.path.join(BLASTOUTDIR, "{sample}.{ext}.txt")
     log:
-        "logs/trinity/outputlog_{sample}_{suffix}_blast.log"
+        "logs/trinity/outputlog_{sample}.{ext}_blast.log"
     params:
         inputname = "{sample}",
-        outputdir = os.path.join(BLASTOUTDIR, "{sample}_{suffix}.txt"),
-        outputblast = os.path.join(BLASTOUTDIR, "{sample}_{suffix}.txt"),
+        outputdir = os.path.join(BLASTOUTDIR, "{sample}.{ext}.txt"),
+        outputblast = os.path.join(BLASTOUTDIR, "{sample}.{ext}.txt"),
         blastdb = "{sample}_db"
     threads: 4
     shell:

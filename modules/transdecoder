@@ -14,12 +14,6 @@ fastqfiles = os.listdir(FASTQDUMP)
 uniqueaccessions = set([(curr.split("_")[0]).split(".fastq")[0] for curr in fastqfiles])
 availablesigs = [ os.path.join(OUTPUTDIR, x + '.fastq.sig') for x in uniqueaccessions ]
 
-#os.path.join(TRINITYOUTDIR, "trinity_results_sample_{sample}, "Trinity.fasta")
-#seqret -sequence {params.fasta} -outseq {input.fastafile}
-# cat {input.fastafile} | awk '{if(NR%4==1) {printf(">%s\n",substr($0,2));} else if(NR%4==2) print;}' > {params.fasta}
-# -m 50 to try to force this to work 
-# sed -n '1~4s/^@/>/p;2~4p' {input.fastafile} > {params.fasta}
-
 rule transdecoder:
     input:
         fastafile = os.path.join(TRINITYFASTADIR, "{sample}.fasta")
@@ -47,6 +41,6 @@ rule transdecoder:
         mv {params.inputname}.fasta.transdecoder.cds {params.cds}
         mv {params.inputname}.fasta.transdecoder.gff3 {params.gff3}
         mv {params.inputname}.fasta.transdecoder.bed {params.bed}
-        rm {params.inputname}.fasta.transdecoder_dir*
-        rm pipeliner.*.cmds
+        rm -r {params.inputname}.fasta.transdecoder_dir*
+        rm -r pipeliner.*.cmds
         """

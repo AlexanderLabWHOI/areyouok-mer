@@ -37,9 +37,9 @@ rule trinity:
         cp {params.trinresult} {params.outputdir}
         """
         
-rule trinity_oneside:
+rule trinity_fastq:
     input:
-        sideone = os.path.join(TRIMMEDINTERMED, "{sample}{ext}")
+        sideone = os.path.join(TRIMMEDINTERMED, "{sample}.fastq")
     output:
         os.path.join(TRINITYFASTADIR, "{sample}.fasta")
     log:
@@ -56,13 +56,14 @@ rule trinity_oneside:
         Trinity --seqType fq --single {input.sideone} --output {params.trinresultdir} --max_memory 150G --trimmomatic
         cp {params.trinresult} {params.outputdir}
         """ 
+
         
 rule trinity_twoside:
     input:
         sideone = os.path.join(STARTDIR, "{sample}_3.fastq"),
         sidetwo = os.path.join(STARTDIR, "{sample}_4.fastq")
     output:
-        os.path.join(TRINITYFASTADIR, "{sample}.fasta")
+        os.path.join(TRINITYFASTADIR, "{sample}_raw.fasta")
     log:
         "logs/trinity/outputlog_{sample}_trinity.log"
     params:

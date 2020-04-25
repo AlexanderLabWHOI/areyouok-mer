@@ -16,32 +16,36 @@ MMETSPDIR = config["mmetspdir"]
 OUTPUTNAME = config["outputname"]
 REFERENCEDIR = config["referencedir"]
 
-indexfile = pd.read_csv(config["indexfile"], sep = "\t", index_col = 2)
+indexfile = pd.read_csv(config["indexfile"], sep = "\t", index_col = 2, header = 0)
 referencefiles = list((indexfile.loc["refgen"])["FileName"])
-rawfiles = (indexfile.loc[["refgen","onesid"]])
+rawfiles = (indexfile.loc[["onesid"]])
 mmetspfiles = (indexfile.loc[["reftrans"]])
+rawfiles["FileType"] = list(rawfiles.index)
 
 availablesigs = []
+availablesigsprot = []
 directorydict = dict({"refgen":REFERENCEDIR,\
                       "reftrans":MMETSPDIR,\
                       "onesid":TRIMMEDINTERMED,\
                       "trinity":TRINITYFASTADIR})
 for r in range(0, len(rawfiles.index)):
     currdata = rawfiles.iloc[r]
-    availablesigs.append(os.path.join(directorydir[currdata.index], str(currdata["FileName"]) + str(currdata["FileExtension"]) + ".sig"))
+    availablesigs.append(os.path.join(directorydict[str(currdata["FileType"])], str(currdata["FileName"]) + "." + str(currdata["FileExtension"]) + ".sig"))
     # also looking for a signature in the Trinity directory.
-    if str(directorydir[currdata.index]) in ["onesid", "twosid"]:
-        availablesigs.append(os.path.join(TRINITYFASTADIR, str(currdata["FileName"]) + str(currdata["FileExtension"]) + ".sig"))
+    if str(directorydict[str(currdata["FileType"])]) in ["onesid", "twosid"]:
+        availablesigs.append(os.path.join(TRINITYFASTADIR, str(currdata["FileName"]) + "." + str(currdata["FileExtension"]) + ".sig"))
+        availablesigsprot.append(os.path.join(TRANSDECODERDIR, str(currdata["FileName"]) + ".fasta.transdecoder.pep.sig"))
     
-
+print("Available sigs are: ")
+print(availablesigs)
 
 import os
 
 rule sourmashcompute:
     input:
-        fastafile = os.path.join(TRIMMEDINTERMED, "{sample}{ext}")
+        fastafile = os.path.join(TRIMMEDINTERMED, "{sample}.{ext}")
     output:
-        os.path.join(OUTPUTDIR, "{sample}{ext}.sig")
+        os.path.join(OUTPUTDIR, "{sample}.{ext}.sig")
     params:
         kmerval = "21,31,33,51",
         outdir = OUTPUTDIR,
@@ -81,6 +85,22 @@ rule sourmashcomputemmetsp:
     shell:
         """
         echo "sample here!"
+        sourmash compute -k {params.kmerval} --track-abundance {input}
+        mv {params.inputname}.fasta.sig {params.outdir}
+        """
+        
+rule sourmashcomputereference:
+    input:
+        fastafile = os.path.join(REFERENCEDIR, "{sample}.fasta")
+    output:
+        os.path.join(OUTPUTDIR, "{sample}.fasta.sig")
+    params:
+        kmerval = "21,31,33,51",
+        outdir = OUTPUTDIR,
+        inputname = "{sample}"
+    shell:
+        """
+        echo "sample here!"{sample}
         sourmash compute -k {params.kmerval} --track-abundance {input}
         mv {params.inputname}.fasta.sig {params.outdir}
         """
@@ -138,7 +158,7 @@ rule sourmashcompareprotein:
     input:
         availablesigs
     params:
-        signame = availablesigsprot #" ".join([os.path.join(OUTPUTDIR, signame + ".sig") for signame in availablesigs]) #os.path.join(OUTPUTDIR, "*.sig")
+        signame = availablesigsprot
     output:
         out12 = os.path.join(COMPAREDIR, OUTPUTNAME + "_k12_protein.cmp.csv"),
         out15 = os.path.join(COMPAREDIR, OUTPUTNAME + "_k15_protein.cmp.csv"),

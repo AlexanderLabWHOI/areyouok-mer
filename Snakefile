@@ -23,7 +23,7 @@ BACKTRANSLATEDDIR = config["backtrans"]
 BACKTRANSLATEDSIG = config["backtranssig"]
 OUTPUTNAME = config["outputname"]
 MMETSPDIR = config["mmetspdir"]
-REFERENCEDIR = config["reference"]
+REFERENCEDIR = config["referencedir"]
 BLASTOUTDIR = config["blastoutdir"]
 
 
@@ -31,7 +31,10 @@ BLASTOUTDIR = config["blastoutdir"]
 # Also, run `organize_commands.ipynb` to create the reference file, and specify this file in the config.
 indexfile = pd.read_csv(config["indexfile"], sep = "\t", index_col = 2)
 referencefiles = (indexfile.loc["refgen"])
-rawfiles = (indexfile.loc[["refgen","onesid"]])
+refname = list(referencefiles["FileName"])
+refext = list(referencefiles["FileExtension"])
+
+rawfiles = (indexfile.loc[["onesid","twosid"]])
 mmetspfiles = (indexfile.loc[["reftrans"]])
 
 kmers = [21,33,51]
@@ -41,33 +44,35 @@ kmersprot = [12,15,18,21,33,51]
 
 include: "modules/concatinterleave"
 include: "modules/trimup"
-include: "modules/cutlowabundance"
+#include: "modules/cutlowabundance"
 include: "modules/sourmash"
 include: "modules/trinity"
 include: "modules/transdecoder"
 include: "modules/convertgff"
 include: "modules/blastassemblies"
+    
+print(list(rawfiles["FileExtension"]))
 
 rule all:
     input:
         # interleave the output files from the NCBI fasterqdump
-        fastqs_interleaved = expand(os.path.join(FASTQFILES, "{accession}{ext}"), zip, accession = list(rawfiles["FileName"]), ext = list(rawfiles["FileExtension"])),
+        fastqs_interleaved = expand(os.path.join(FASTQFILES, "{accession}.{ext}"), zip, accession = list(rawfiles["FileName"]), ext = list(rawfiles["FileExtension"])),
         # next, we need to do error trimming. we use seqtk
-        trimmed_intermed = expand(os.path.join(TRIMMEDINTERMED, "{accession}{ext}"), zip, accession = list(rawfiles["FileName"]), ext = list(rawfiles["FileExtension"])),
+        trimmed_intermed = expand(os.path.join(TRIMMEDINTERMED, "{accession}.{ext}"), zip, accession = list(rawfiles["FileName"]), ext = list(rawfiles["FileExtension"])),
         # next, cut low abundance kmers. we use khmer
         #trimmed_fastqs = expand(os.path.join(TRIMMEDFASTQFILES, "{accession}.fastq"), accession = uniqueaccessionsplusref),
         # next, do a Trinity assembly for the paired end reads (need to edit Trinity module)
         #trinity_assemblies = expand(os.path.join(TRINITYFASTADIR, "{accession}_twoside.fasta"), accession = toassemble),
         # next, do a Trinity assembly for all the reads
-        trinity_assemblies = expand(os.path.join(TRINITYFASTADIR, "{accession}.fasta"), zip, accession = list(rawfiles["FileName"]), ext = list(rawfiles["FileExtension"])),
+        trinity_assemblies = expand(os.path.join(TRINITYFASTADIR, "{accession}.fasta"), accession = list(rawfiles["FileName"])),
         # the next step is computing the sourmash signatures for all except the Trinity assemblies
-        signatures = expand(os.path.join(OUTPUTDIR, "{accession}{ext}.sig"), zip, accession = list(rawfiles["FileName"]), ext = list(rawfiles["FileExtension"])),
+        signatures = expand(os.path.join(OUTPUTDIR, "{accession}.{ext}.sig"), zip, accession = list(rawfiles["FileName"]), ext = list(rawfiles["FileExtension"])),
         # now compute the signatures for the Trinity assemblies
         signaturestrinity = expand(os.path.join(OUTPUTDIR, "{accession}.fasta.sig"), accession = list(rawfiles["FileName"])),
         # now compute the signatures for the MMETSP files
-        signaturesmmetsp = expand(os.path.join(MMETSPDIR, "{accession}.fasta.sig"), accession = list(mmetspnames["FileName"])),
+        signaturesmmetsp = expand(os.path.join(MMETSPDIR, "{accession}.fasta.sig"), accession = list(mmetspfiles["FileName"])),
         # now compute the signatures for the reference files
-        signaturesref = expand(os.path.join(REFERENCEDIR, "{accession}{ext}.sig"), accession = list(referencefiles["FileName"]), ext = list(referencefiles["FileExtension"])),
+        signaturesref = expand(os.path.join(OUTPUTDIR, "{accession}.{ext}.sig"), accession = refname, ext = refext),
         # now do the transdecoder files!
         transdecoder = expand(os.path.join(TRANSDECODERDIR, "{accession}.fasta.transdecoder.pep"), accession = list(rawfiles["FileName"])),
         # now convert the transdecoder files to AA!
@@ -81,5 +86,5 @@ rule all:
         # now do protein comparisons
         comparisonsprotein = expand(os.path.join(COMPAREDIR, OUTPUTNAME + "_k{kmer}_protein.cmp.csv"), kmer = kmersprot),
         # now do a blast of the Trinity assemblies vs the raw for _1 files
-        blastcomparisons = expand(os.path.join(BLASTOUTDIR, "{sample}_{suffix}.txt"), sample = onesides, suffix = suffixesoneside)
+        blastcomparisons = expand(os.path.join(BLASTOUTDIR, "{sample}.{ext}.txt"), zip, sample = list(rawfiles["FileName"]), ext = list(rawfiles["FileExtension"]))
     
